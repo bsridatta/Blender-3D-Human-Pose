@@ -10,7 +10,7 @@ import utils
 
 
 def set_scene_objects() -> bpy.types.Object:
-    num_suzannes = 15
+    num_suzannes = 1
     for index in range(num_suzannes):
         utils.create_smooth_monkey(location=((index - (num_suzannes - 1) / 2) * 3.0, 0.0, 0.0),
                                    name="Suzanne" + str(index))

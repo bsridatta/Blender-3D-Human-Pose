@@ -3,7 +3,6 @@ import math
 from typing import Tuple, Iterable, Optional, Sequence
 from utils.modifier import add_subdivision_surface_modifier
 
-
 def set_smooth_shading(mesh: bpy.types.Mesh) -> None:
     for polygon in mesh.polygons:
         polygon.use_smooth = True
@@ -56,7 +55,6 @@ def create_smooth_sphere(location: Tuple[float, float, float] = (0.0, 0.0, 0.0),
                          subdivision_level: int = 1,
                          name: Optional[str] = None) -> bpy.types.Object:
     bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, calc_uvs=True)
-
     current_object = bpy.context.object
 
     if name is not None:
