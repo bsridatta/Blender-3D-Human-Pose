@@ -2,9 +2,9 @@ import os
 import subprocess
 import numpy as np
 
-def render(out_dir="./output/human_pose_",
-           resolution=50,
-           samplings=16,
+def render(out_dir="./output/human_pose_x",
+           resolution=100,
+           samplings=128,
            animation=False,
            pose=None):
 

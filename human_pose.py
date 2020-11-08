@@ -32,9 +32,10 @@ def set_principled_node_as_ceramic(principled_node: bpy.types.Node) -> None:
         roughness=0.0,
     )
 
+
 def create_pose_objects(pose):
-    pose[:,1] *= -1
-    pose = pose[:,[0,2,1]]
+    pose[:, 1] *= -1
+    pose = pose[:, [0, 2, 1]]
 
     js = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
           'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
@@ -50,8 +51,8 @@ def create_pose_objects(pose):
     dist = head2neck+neck2torso + torso2root
 
     pose -= pose[pose[:, -1].argmin()]
-    pose*=2
-    pose[:,2] += 0.1
+    pose *= 2
+    pose[:, 2] += 0.1
 
     joints = []
     for joint in pose:
@@ -89,12 +90,12 @@ def create_pose_objects(pose):
     return joints, lines
 
 
-
 def set_scene_objects(pose) -> bpy.types.Object:
 
     joints, lines = create_pose_objects(pose)
 
-    mat = utils.add_material("Material_Right", use_nodes=True, make_node_tree_empty=True)
+    mat = utils.add_material(
+        "Material_Right", use_nodes=True, make_node_tree_empty=True)
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
     output_node = nodes.new(type='ShaderNodeOutputMaterial')
@@ -109,7 +110,8 @@ def set_scene_objects(pose) -> bpy.types.Object:
         line.data.materials.append(mat)
 
     current_object = utils.create_plane(size=20.0, name="Floor")
-    mat = utils.add_material("Material_Plane", use_nodes=True, make_node_tree_empty=True)
+    mat = utils.add_material(
+        "Material_Plane", use_nodes=True, make_node_tree_empty=True)
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
     output_node = nodes.new(type='ShaderNodeOutputMaterial')
@@ -122,10 +124,10 @@ def set_scene_objects(pose) -> bpy.types.Object:
     sun_object.data.use_nodes = True
     sun_object.data.node_tree.nodes["Emission"].inputs["Strength"].default_value = 3.0
 
-
-    bpy.ops.object.empty_add(location=(0.0, -0.75, 1.0))
+    bpy.ops.object.empty_add(location=(0.0, -0.75, 1.3))
     focus_target = bpy.context.object
     return focus_target
+
 
 def render_image():
 
@@ -150,18 +152,17 @@ def render_image():
     focus_target = set_scene_objects(pose)
 
     # Camera
-    bpy.ops.object.camera_add(location=(0.0, -16.0, 2.0))
+    bpy.ops.object.camera_add(location=(0.0, -8.0, 2.0))
     camera_object = bpy.context.object
 
     utils.add_track_to_constraint(camera_object, focus_target)
-    utils.set_camera_params(camera_object.data, focus_target, lens=85, fstop=0.5)
+    utils.set_camera_params(
+        camera_object.data, focus_target, lens=85, fstop=0.5)
 
     # Lights
     utils.build_environment_texture_background(world, hdri_path)
-    # utils.build_rgb_background(world, rgb=(0.0, 0.0, 0.0, 1.0))
 
-
-    ## Composition
+    # Composition
     utils.build_scene_composition(scene)
 
     # ## Lights
@@ -169,7 +170,9 @@ def render_image():
     #                      rotation=(0.0, math.pi * 0.5, -math.pi * 0.1))
 
     # Render Setting
-    utils.set_output_properties(scene, resolution_percentage, output_file_path)
+    utils.set_output_properties(scene, resolution_percentage, output_file_path,
+                                res_x=1080, res_y=1080)
+    
     utils.set_cycles_renderer(scene, camera_object, num_samples)
 
 if __name__ == "__main__":
