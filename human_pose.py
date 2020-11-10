@@ -33,59 +33,60 @@ def set_principled_node_as_ceramic(principled_node: bpy.types.Node) -> None:
     )
 
 
-def create_pose_objects(pose):
-    pose[:, 1] *= -1
-    pose = pose[:, [0, 2, 1]]
+def create_pose_objects(poses):
+    for pose in poses:
+        pose[:, 1] *= -1
+        pose = pose[:, [0, 2, 1]]
 
-    js = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
-          'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
-    skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
-                (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
+        js = ('Pelvis', 'R_Hip', 'R_Knee', 'R_Ankle', 'L_Hip', 'L_Knee', 'L_Ankle', 'Torso',
+            'Neck', 'Nose', 'Head', 'L_Shoulder', 'L_Elbow', 'L_Wrist', 'R_Shoulder', 'R_Elbow', 'R_Wrist')
+        skeleton = ((0, 7), (7, 8), (8, 9), (9, 10), (8, 11), (11, 12), (12, 13),
+                    (8, 14), (14, 15), (15, 16), (0, 1), (1, 2), (2, 3), (0, 4), (4, 5), (5, 6))
 
-    head2neck = np.linalg.norm(
-        pose[js.index('Head'), :] - pose[js.index('Neck'), :],  keepdims=True)
-    neck2torso = np.linalg.norm(
-        pose[js.index('Neck'), :] - pose[js.index('Torso'), :],  keepdims=True)
-    torso2root = np.linalg.norm(
-        pose[js.index('Torso'), :] - pose[js.index('Pelvis'), :],  keepdims=True)
-    dist = head2neck+neck2torso + torso2root
+        head2neck = np.linalg.norm(
+            pose[js.index('Head'), :] - pose[js.index('Neck'), :],  keepdims=True)
+        neck2torso = np.linalg.norm(
+            pose[js.index('Neck'), :] - pose[js.index('Torso'), :],  keepdims=True)
+        torso2root = np.linalg.norm(
+            pose[js.index('Torso'), :] - pose[js.index('Pelvis'), :],  keepdims=True)
+        dist = head2neck+neck2torso + torso2root
 
-    pose -= pose[pose[:, -1].argmin()]
-    pose *= 2
-    pose[:, 2] += 0.1
+        pose -= pose[pose[:, -1].argmin()]
+        pose *= 2
+        pose[:, 2] += 0.1
 
-    joints = []
-    for joint in pose:
-        object = utils.create_smooth_sphere(location=(joint[0], joint[1], joint[2]),
-                                            radius=0.07)
-        joints.append(object)
+        joints = []
+        for joint in pose:
+            object = utils.create_smooth_sphere(location=(joint[0], joint[1], joint[2]),
+                                                radius=0.07)
+            joints.append(object)
 
-    lines = []
-    for idx, line in enumerate(skeleton):
+        lines = []
+        for idx, line in enumerate(skeleton):
 
-        draw_curve = bpy.data.curves.new('draw_curve'+str(idx), 'CURVE')
-        draw_curve.dimensions = '3D'
-        spline = draw_curve.splines.new('BEZIER')
-        spline.bezier_points.add(1)
-        curve = bpy.data.objects.new('curve'+str(idx), draw_curve)
-        bpy.context.collection.objects.link(curve)
+            draw_curve = bpy.data.curves.new('draw_curve'+str(idx), 'CURVE')
+            draw_curve.dimensions = '3D'
+            spline = draw_curve.splines.new('BEZIER')
+            spline.bezier_points.add(1)
+            curve = bpy.data.objects.new('curve'+str(idx), draw_curve)
+            bpy.context.collection.objects.link(curve)
 
-        # Curve settings for new curve
-        draw_curve.resolution_u = 64
-        draw_curve.fill_mode = 'FULL'
-        draw_curve.bevel_depth = 0.04
-        draw_curve.bevel_resolution = 5
+            # Curve settings for new curve
+            draw_curve.resolution_u = 64
+            draw_curve.fill_mode = 'FULL'
+            draw_curve.bevel_depth = 0.04
+            draw_curve.bevel_resolution = 5
 
-        # Assign bezier points to selection object locations
-        for i in range(len(line)):
-            p = spline.bezier_points[i]
-            p.co = pose[line[i]]
-            p.handle_right_type = "VECTOR"
-            p.handle_left_type = "VECTOR"
+            # Assign bezier points to selection object locations
+            for i in range(len(line)):
+                p = spline.bezier_points[i]
+                p.co = pose[line[i]]
+                p.handle_right_type = "VECTOR"
+                p.handle_left_type = "VECTOR"
 
-        bpy.context.view_layer.objects.active = curve
-        bpy.ops.object.mode_set(mode='OBJECT')
-        lines.append(curve)
+            bpy.context.view_layer.objects.active = curve
+            bpy.ops.object.mode_set(mode='OBJECT')
+            lines.append(curve)
 
     return joints, lines
 
