@@ -170,8 +170,7 @@ def render_image():
     #                      rotation=(0.0, math.pi * 0.5, -math.pi * 0.1))
 
     # Render Setting
-    utils.set_output_properties(scene, resolution_percentage, output_file_path,
-                                res_x=1080, res_y=1080)
+    utils.set_output_properties(scene, resolution_percentage, output_file_path)
     
     utils.set_cycles_renderer(scene, camera_object, num_samples)
 

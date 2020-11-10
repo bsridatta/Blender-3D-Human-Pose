@@ -21,7 +21,7 @@ def render(out_dir="./output/human_pose_x",
 
     bashCommand = f"blender --background --python ./human_pose.py {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
 
-    process = subprocess.call(bashCommand, shell=True)
+    process = subprocess.call(bashCommand)
     
 if __name__ == "__main__":
     pose = [
