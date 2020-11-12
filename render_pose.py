@@ -3,8 +3,8 @@ import subprocess
 import numpy as np
 
 def render(out_dir="./.output/human_pose_x",
-           resolution=100,
-           samplings=16,
+           resolution=50,
+           samplings=6,
            animation=False,
            pose=None):
 

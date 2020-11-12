@@ -100,30 +100,23 @@ def create_pose_objects(pose):
 
     return joints, lines
 
-# def create_material_by_node(principled_node):
-
-
-def set_scene_objects(pose) -> bpy.types.Object:
-    loader.build_pbr_textured_nodes_from_name("Marble01")
-
+def create_custom_material(principled_node_setter, name):
     mat = utils.add_material(
-        "Material_Right", use_nodes=True, make_node_tree_empty=True)
+        name, use_nodes=True, make_node_tree_empty=True)
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
     output_node = nodes.new(type='ShaderNodeOutputMaterial')
     principled_node = nodes.new(type='ShaderNodeBsdfPrincipled')
-    set_principled_node_as_rough_blue(principled_node)
+    principled_node_setter(principled_node)
     links.new(principled_node.outputs['BSDF'], output_node.inputs['Surface'])
 
-    mat1 = utils.add_material(
-        "Material_Left", use_nodes=True, make_node_tree_empty=True)
-    nodes = mat1.node_tree.nodes
-    links = mat1.node_tree.links
-    output_node = nodes.new(type='ShaderNodeOutputMaterial')
-    principled_node = nodes.new(type='ShaderNodeBsdfPrincipled')
-    set_principled_node_as_rough_red(principled_node)
-    links.new(principled_node.outputs['BSDF'], output_node.inputs['Surface'])
+    return mat
 
+def set_scene_objects(pose) -> bpy.types.Object:
+    loader.build_pbr_textured_nodes_from_name("Marble01")
+
+    mat = create_custom_material(set_principled_node_as_rough_blue ,"Material_Right")
+    mat1 = create_custom_material(set_principled_node_as_rough_red ,"Material_left")
 
     for pose, mat in zip([pose, pose+pose*0.1], [mat,mat1]):
         joints, lines = create_pose_objects(pose)
@@ -135,18 +128,9 @@ def set_scene_objects(pose) -> bpy.types.Object:
             line.data.materials.append(mat)
 
     ##################
-    mat = utils.add_material(
-        "Material_Plane", use_nodes=True, make_node_tree_empty=True)
-    nodes = mat.node_tree.nodes
-    links = mat.node_tree.links
-    output_node = nodes.new(type='ShaderNodeOutputMaterial')
-    principled_node = nodes.new(type='ShaderNodeBsdfPrincipled')
-    set_principled_node_as_ceramic(principled_node)
-    links.new(principled_node.outputs['BSDF'], output_node.inputs['Surface'])
-    
+    mat = create_custom_material(set_principled_node_as_ceramic, "Material_Plane")
     current_object = utils.create_plane(size=20.0, name="Floor")
     current_object.data.materials.append(mat)
-    
 
     current_object = utils.create_plane(size=12.0,
                                         location=(0.0, 4.0, 0.0),
