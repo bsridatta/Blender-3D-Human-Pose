@@ -34,7 +34,8 @@ def set_principled_node(principled_node: bpy.types.Node,
                         clearcoat_roughness: float = 0.03,
                         ior: float = 1.45,
                         transmission: float = 0.0,
-                        transmission_roughness: float = 0.0) -> None:
+                        transmission_roughness: float = 0.0,
+                        alpha: float = 1.0) -> None:
     principled_node.inputs['Base Color'].default_value = base_color
     principled_node.inputs['Subsurface'].default_value = subsurface
     principled_node.inputs['Subsurface Color'].default_value = subsurface_color
@@ -52,6 +53,7 @@ def set_principled_node(principled_node: bpy.types.Node,
     principled_node.inputs['IOR'].default_value = ior
     principled_node.inputs['Transmission'].default_value = transmission
     principled_node.inputs['Transmission Roughness'].default_value = transmission_roughness
+    principled_node.inputs['Alpha'].default_value = alpha
 
 
 def build_pbr_nodes(node_tree: bpy.types.NodeTree,
