@@ -53,10 +53,12 @@ def create_plane(location: Tuple[float, float, float] = (0.0, 0.0, 0.0),
 def create_smooth_sphere(location: Tuple[float, float, float] = (0.0, 0.0, 0.0),
                          radius: float = 1.0,
                          subdivision_level: int = 1,
-                         name: Optional[str] = None) -> bpy.types.Object:
+                         name: Optional[str] = None,
+                         shadow: bool = True) -> bpy.types.Object:
     bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, calc_uvs=True)
     current_object = bpy.context.object
-
+    current_object.cycles_visibility.shadow = shadow
+    
     if name is not None:
         current_object.name = name
 

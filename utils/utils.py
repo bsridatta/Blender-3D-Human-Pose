@@ -42,7 +42,7 @@ def create_text(
 
 
 ################################################################################
-# Scene
+#   
 ################################################################################
 
 
@@ -82,7 +82,7 @@ def build_environment_texture_background(world: bpy.types.World, hdri_path: str,
 
     mapping_node = node_tree.nodes.new(type="ShaderNodeMapping")
     if bpy.app.version >= (2, 81, 0):
-        mapping_node.inputs["Rotation"].default_value = (0.0, 0.0, rotation)
+        mapping_node.inputs["Rotation"].default_value = (0.0, 0.34, rotation)
     else:
         mapping_node.rotation[2] = rotation
 
@@ -118,8 +118,18 @@ def set_cycles_renderer(scene: bpy.types.Scene,
 
     scene.render.film_transparent = use_transparent_bg
     scene.view_layers[0].cycles.use_denoising = use_denoising
-
     scene.cycles.samples = num_samples
+
+    # GPU Acceleration Ref - https://blender.stackexchange.com/a/196702
+    bpy.context.scene.cycles.device = "GPU"
+    bpy.context.preferences.addons["cycles"].preferences.compute_device_type = "CUDA"
+
+    # get_devices() to let Blender detects GPU device
+    bpy.context.preferences.addons["cycles"].preferences.get_devices()
+    print(bpy.context.preferences.addons["cycles"].preferences.compute_device_type)
+    for d in bpy.context.preferences.addons["cycles"].preferences.devices:
+        d["use"] = 1 # Using all devices, include GPU and CPU
+        print(d["name"], d["use"])
 
 
 ################################################################################
