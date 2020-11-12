@@ -2,9 +2,9 @@ import os
 import subprocess
 import numpy as np
 
-def render(out_dir="./output/human_pose_x",
+def render(out_dir="./.output/human_pose_x",
            resolution=100,
-           samplings=128,
+           samplings=16,
            animation=False,
            pose=None):
 
@@ -21,7 +21,7 @@ def render(out_dir="./output/human_pose_x",
 
     bashCommand = f"blender --background --python ./human_pose.py {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
 
-    process = subprocess.call(bashCommand)
+    process = subprocess.call(bashCommand, shell=True)
     
 if __name__ == "__main__":
     pose = [

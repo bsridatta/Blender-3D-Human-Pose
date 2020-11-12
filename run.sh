@@ -11,16 +11,16 @@ TEST=false
 TEST=true
 
 if ${TEST}; then
-  RESOLUTION=100
+  RESOLUTION=10
   SAMPLINGS=16
-  ANIM_FRAMES_OPTION="--render-frame 1..5"
+  ANIM_FRAMES_OPTION="--render-frame 1"
 fi
 
 # Create the output directory
 mkdir -p ${OUT_DIR}
 
 # Run the scripts
-/lhome/sbudara/Documents/blender283/blender --background --python ./04_principled_bsdf.py --render-frame 1 -- ${OUT_DIR}/04_principled_bsdf_ ${RESOLUTION} ${SAMPLINGS}
+blender --background --python ./10_mocap.py ${ANIM_FRAMES_OPTION} -- ./assets/motion/102_01.bvh ${OUT_DIR}/10/frame_ ${RESOLUTION} ${SAMPLINGS}
 
 
 # /lhome/sbudara/Documents/blender283/blender --background --python ./01_cube.py --render-frame 1 -- ${OUT_DIR}/01_cube_ ${RESOLUTION} ${SAMPLINGS}
