@@ -20,10 +20,12 @@ def render(out_dir="./.output/human_pose_x",
         pass
     
     blender_path = "/lhome/sbudara/Documents/blender283/blender"
+    script_path = "./human_pose.py"
+
     if os.path.exists(blender_path):
-        bashCommand = f"{blender_path} --background --python ./human_pose.py {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
+        bashCommand = f"{blender_path} --background --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
     else:
-        bashCommand = f"blender --background --python ./human_pose.py {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
+        bashCommand = f"blender --background --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
 
     process = subprocess.call(bashCommand, shell=True)
     
