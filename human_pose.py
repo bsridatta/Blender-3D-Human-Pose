@@ -124,11 +124,11 @@ def set_scene_objects(pose) -> bpy.types.Object:
         mats = [mat, mat1]
     else:
         mats = [mat]
-        # pose = [pose]
+        pose = [pose]
         # debug
-        pose = [pose, pose+pose*0.1]
-        mat1 = create_custom_material(set_principled_node_as_rough_red ,"Material_left")
-        mats = [mat, mat1]
+        # pose = [pose, pose+pose*0.1]
+        # mat1 = create_custom_material(set_principled_node_as_rough_red ,"Material_left")
+        # mats = [mat, mat1]
 
     for idx, (pose_, mat) in enumerate(zip(pose, mats)):
         # ignore ground truth for shadow
@@ -141,7 +141,7 @@ def set_scene_objects(pose) -> bpy.types.Object:
 
         for line in lines:
             line.data.materials.append(mat)
-                
+
     ##################
     mat = create_custom_material(set_principled_node_as_ceramic, "Material_Plane")
     current_object = utils.create_plane(size=20.0, name="Floor")
