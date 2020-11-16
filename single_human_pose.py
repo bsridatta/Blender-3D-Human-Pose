@@ -129,11 +129,16 @@ def set_scene_objects(pose) -> bpy.types.Object:
     current_object = utils.create_plane(size=20.0, name="Floor")
     current_object.data.materials.append(mat)
 
-    current_object = utils.create_plane(size=12.0,
-                                        location=(0.0, 4.0, 0.0),
-                                        rotation=(math.pi * 90.0 / 180.0, 0.0, 0.0),
-                                        name="Wall")
-    current_object.data.materials.append(mat)
+    # current_object = utils.create_plane(size=12.0,
+    #                                     location=(0.0, 4.0, 0.0),
+    #                                     rotation=(math.pi * 90.0 / 180.0, 0.0, 0.0),
+    #                                     name="Wall")
+    # current_object.data.materials.append(mat)
+
+
+    sun_object = utils.create_sun_light()
+    sun_object.data.use_nodes = True
+    sun_object.data.node_tree.nodes["Emission"].inputs["Strength"].default_value = 3.0
 
     bpy.ops.object.empty_add(location=(0.0, -0.75, 1.3))
     focus_target = bpy.context.object
@@ -171,7 +176,8 @@ def render_image():
         camera_object.data, focus_target, lens=85, fstop=0.5)
 
     # Lights
-    utils.build_environment_texture_background(world, hdri_path)
+    # utils.build_environment_texture_background(world, hdri_path)
+    utils.build_rgb_background(world, rgb=(0.0, 0.0, 0.0, 1.0))
 
     # Composition
     utils.build_scene_composition(scene)
