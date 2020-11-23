@@ -157,6 +157,11 @@ def set_scene_objects(pose) -> bpy.types.Object:
     #                                     name="Wall")
     # current_object.data.materials.append(mat)
 
+
+    sun_object = utils.create_sun_light()
+    sun_object.data.use_nodes = True
+    sun_object.data.node_tree.nodes["Emission"].inputs["Strength"].default_value = 3.0
+
     bpy.ops.object.empty_add(location=(0.0, -0.75, 1.3))
     focus_target = bpy.context.object
     return focus_target
@@ -194,8 +199,9 @@ def render_image():
 
     # Lights
     # utils.build_environment_texture_background(world, hdri_path)
+
     # Background
-    utils.build_rgb_background(world, rgb=(1.0, 1.0, 1.0, 1.0))
+    utils.build_rgb_background(world, rgb=(0.0, 0.0, 0.0, 1.0))
 
     # Composition
     utils.build_scene_composition(scene)
