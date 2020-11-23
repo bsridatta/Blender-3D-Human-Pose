@@ -3,7 +3,7 @@ import subprocess
 import numpy as np
 
 def render(out_dir="./.output/human_pose_x",
-           resolution=50,
+           resolution=100,
            samplings=6,
            animation=False,
            pose=None):
@@ -20,12 +20,12 @@ def render(out_dir="./.output/human_pose_x",
         pass
     
     blender_path = "/lhome/sbudara/Documents/blender283/blender"
-    script_path = "./human_pose.py"
+    script_path = "./single_human_pose.py"
 
     if os.path.exists(blender_path):
         bashCommand = f"{blender_path} --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
     else:
-        bashCommand = f"blender --background --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
+        bashCommand = f"blender --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
 
     process = subprocess.call(bashCommand, shell=True)
     

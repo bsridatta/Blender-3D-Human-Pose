@@ -113,12 +113,14 @@ def set_cycles_renderer(scene: bpy.types.Scene,
     scene.camera = camera_object
 
     scene.render.image_settings.file_format = 'PNG'
+    # scene.render.image_settings.compression = 100
     scene.render.engine = 'CYCLES'
     scene.render.use_motion_blur = use_motion_blur
 
     scene.render.film_transparent = use_transparent_bg
     scene.view_layers[0].cycles.use_denoising = use_denoising
     scene.cycles.samples = num_samples
+    scene.render.image_settings.compression = 100
 
     # GPU Acceleration Ref - https://blender.stackexchange.com/a/196702
     bpy.context.scene.cycles.device = "GPU"
