@@ -34,7 +34,8 @@ def set_principled_node_as_rough_red(principled_node: bpy.types.Node) -> None:
 def set_principled_node_as_ceramic(principled_node: bpy.types.Node) -> None:
     utils.set_principled_node(
         principled_node=principled_node,
-        base_color=(0.8, 0.8, 0.8, 1.0),
+        # base_color=(0.8, 0.8, 0.8, 1.0),
+        base_color=(1.0, 1.0, 1.0, 1.0),
         subsurface=0.1,
         subsurface_color=(0.9, 0.9, 0.9, 1.0),
         subsurface_radius=(1.0, 1.0, 1.0),
@@ -99,7 +100,7 @@ def create_pose_objects(pose, shadow=True):
         bpy.context.object.cycles_visibility.shadow = shadow
         lines.append(curve)
 
-    return joints, lines
+    return joints, lines, pose
 
 def create_custom_material(principled_node_setter, name):
     mat = utils.add_material(
@@ -114,30 +115,23 @@ def create_custom_material(principled_node_setter, name):
     return mat
 
 def set_floor_and_lights(floor_mat) -> None:
-    size = 200.0
+    size = 20.0
     current_object = utils.create_plane(size=size, name="Floor")
     mat = create_custom_material(set_principled_node_as_ceramic ,"Material_Floor")
-
     current_object.data.materials.append(mat)
 
-    utils.create_area_light(location=(6.0, 0.0, 4.0),
-                            rotation=(0.0, math.pi * 60.0 / 180.0, 0.0),
-                            size=5.0,
-                            color=(1.00, 0.70, 0.60, 1.00),
+    utils.create_area_light(location=(4.0, -3.0, 6.0),
+                            rotation=(0.0, math.pi * 60.0 / 180.0, - math.pi * 32.0 / 180.0),
+                            size=0.50,
+                            color=(1.00, 1.0, 1.0, 1.00),
                             strength=1500.0,
                             name="Main Light")
-    # utils.create_area_light(location=(-6.0, 0.0, 2.0),
-    #                         rotation=(0.0, -math.pi * 80.0 / 180.0, 0.0),
-    #                         size=5.0,
-    #                         color=(0.30, 0.42, 1.00, 1.00),
-    #                         strength=1000.0,
-    #                         name="Sub Light")
-
+#    
 
 def set_scene_objects(pose) -> bpy.types.Object:
     mat = create_custom_material(set_principled_node_as_rough_blue ,"Material_Right")
 
-    joints, lines = create_pose_objects(pose)
+    joints, lines, pose = create_pose_objects(pose)
 
     for joint in joints:
         joint.data.materials.append(mat)
@@ -148,21 +142,7 @@ def set_scene_objects(pose) -> bpy.types.Object:
     mat = create_custom_material(set_principled_node_as_ceramic, "Material_Plane")
     set_floor_and_lights(mat)
     
-    # current_object = utils.create_plane(size=20.0, name="Floor")
-    # current_object.data.materials.append(mat)
-
-    # current_object = utils.create_plane(size=12.0,
-    #                                     location=(0.0, 4.0, 0.0),
-    #                                     rotation=(math.pi * 90.0 / 180.0, 0.0, 0.0),
-    #                                     name="Wall")
-    # current_object.data.materials.append(mat)
-
-
-    sun_object = utils.create_sun_light()
-    sun_object.data.use_nodes = True
-    sun_object.data.node_tree.nodes["Emission"].inputs["Strength"].default_value = 3.0
-
-    bpy.ops.object.empty_add(location=(0.0, -0.75, 1.3))
+    bpy.ops.object.empty_add(location=(pose[0][0], pose[0][1], pose[0][2]*0.8))
     focus_target = bpy.context.object
     return focus_target
 
@@ -177,7 +157,7 @@ def render_image():
     pose = np.array(json.loads(pose_string))
 
     # Parameters
-    # hdri_path = "./assets/HDRIs/green_point_park_2k.hdr"
+    hdri_path = "./assets/HDRIs/green_point_park_2k.hdr"
 
     # Scene Building
     scene = bpy.data.scenes["Scene"]
@@ -201,16 +181,19 @@ def render_image():
     # utils.build_environment_texture_background(world, hdri_path)
 
     # Background
-    utils.build_rgb_background(world, rgb=(0.0, 0.0, 0.0, 1.0))
+    utils.build_rgb_background(world, rgb=(1.0, 1.0, 1.0, 1.0))
+    # utils.build_rgb_background(world, rgb=(0.0, 0.0, 0.0, 1.0))
 
     # Composition
-    utils.build_scene_composition(scene)
+    # utils.build_scene_composition(scene)
 
     # Render Setting
-    utils.set_output_properties(scene, resolution_percentage, output_file_path,
-                                res_x=300, res_y=300)
+    res_x, res_y = 300, 300
     
-    utils.set_cycles_renderer(scene, camera_object, num_samples)
+    utils.set_output_properties(scene, resolution_percentage, output_file_path,
+                                res_x, res_y)
+    
+    utils.set_cycles_renderer(scene, camera_object, num_samples, use_transparent_bg=True)
 
 if __name__ == "__main__":
     render_image()

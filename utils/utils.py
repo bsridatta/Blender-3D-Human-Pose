@@ -113,7 +113,6 @@ def set_cycles_renderer(scene: bpy.types.Scene,
     scene.camera = camera_object
 
     scene.render.image_settings.file_format = 'PNG'
-    # scene.render.image_settings.compression = 100
     scene.render.engine = 'CYCLES'
     scene.render.use_motion_blur = use_motion_blur
 

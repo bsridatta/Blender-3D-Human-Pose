@@ -219,5 +219,6 @@ def render_image():
     
     utils.set_cycles_renderer(scene, camera_object, num_samples)
 
+
 if __name__ == "__main__":
     render_image()
