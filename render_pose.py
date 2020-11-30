@@ -4,12 +4,16 @@ import numpy as np
 
 def render(out_dir="./.output/human_pose_x",
            resolution=100,
-           samplings=6,
+           samplings=10,
            animation=False,
-           pose=None):
+           pose=None,
+           color=0,
+           gt=None,
+           error=0):
+
+    print(out_dir)
     
-    if True:
-        samplings = 128 
+    # samplings = 128 
 
     if animation:
         anim_frame_option = "--render-anim"
@@ -17,21 +21,22 @@ def render(out_dir="./.output/human_pose_x",
         anim_frame_option = "--render-frame 1"
 
     # Create the output directory
-    try:
-        os.mkdir("".join(out_dir.split("/")[:-1]))
-    except:
-        pass
+    # try:
+    #     os.mkdir("".join(out_dir.split("/")[:-1]))
+    # except:
+    #     pass
     
-    blender_path = "/lhome/sbudara/Documents/blender283/blender"
-    script_path = "./single_human_pose.py"
-
-    if os.path.exists(blender_path):
-        bashCommand = f"{blender_path} --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
+    # blender_path = "/lhome/sbudara/Documents/blender283/blender"
+    blender_path = 'blender'
+    
+    script_path = f"{os.environ['HOME']}/lab/blender-cli-rendering/human_pose.py"
+    if gt == None:
+        bashCommand = f"{blender_path} --background --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} {color} '{(list(pose))}'"
     else:
-        bashCommand = f"blender --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} '{(list(pose))}'"
-
+        bashCommand = f"{blender_path} --background --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} {color} '{(list(pose))}' '{(list(gt))}' '{error}'"
+  
     process = subprocess.call(bashCommand, shell=True)
-    
+
 if __name__ == "__main__":
     pose = [
         [0,            0,           0],
@@ -71,4 +76,7 @@ if __name__ == "__main__":
         [-2.6958e-01, -1.6512e-01, -1.6593e-01],
         [-1.3282e-01, -8.0722e-02, -3.6027e-01]]
 
-    render(pose=pose)    
+    render(pose=pose, gt=pose*0.1, error=52)    
+
+
+

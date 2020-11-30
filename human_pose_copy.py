@@ -23,16 +23,6 @@ def set_principled_node_as_rough_blue(principled_node: bpy.types.Node) -> None:
 def set_principled_node_as_rough_red(principled_node: bpy.types.Node) -> None:
     utils.set_principled_node(
         principled_node=principled_node,
-        base_color=(0.6, 0.1, 0.36, 1.0),
-        metallic=0.5,
-        specular=0.5,
-        roughness=0.9,
-    )
-
-
-def set_principled_node_as_alpha_red(principled_node: bpy.types.Node) -> None:
-    utils.set_principled_node(
-        principled_node=principled_node,
         base_color=(0.6, 0.2, 0.1, 1.0),
         metallic=0.5,
         specular=0.5,
@@ -44,8 +34,7 @@ def set_principled_node_as_alpha_red(principled_node: bpy.types.Node) -> None:
 def set_principled_node_as_ceramic(principled_node: bpy.types.Node) -> None:
     utils.set_principled_node(
         principled_node=principled_node,
-        # base_color=(0.8, 0.8, 0.8, 1.0),
-        base_color=(1.0, 1.0, 1.0, 1.0),
+        base_color=(0.8, 0.8, 0.8, 1.0),
         subsurface=0.1,
         subsurface_color=(0.9, 0.9, 0.9, 1.0),
         subsurface_radius=(1.0, 1.0, 1.0),
@@ -110,7 +99,7 @@ def create_pose_objects(pose, shadow=True):
         bpy.context.object.cycles_visibility.shadow = shadow
         lines.append(curve)
 
-    return joints, lines, pose
+    return joints, lines
 
 def create_custom_material(principled_node_setter, name):
     mat = utils.add_material(
@@ -124,48 +113,41 @@ def create_custom_material(principled_node_setter, name):
 
     return mat
 
-def set_floor_and_lights(floor_mat) -> None:
-    size = 20.0
-    current_object = utils.create_plane(size=size, name="Floor")
-    mat = create_custom_material(set_principled_node_as_ceramic ,"Material_Floor")
-    current_object.data.materials.append(mat)
+def set_scene_objects(pose) -> bpy.types.Object:
+    loader.build_pbr_textured_nodes_from_name("Marble01")
 
-    utils.create_area_light(location=(4.0, -3.0, 6.0),
-                            rotation=(0.0, math.pi * 60.0 / 180.0, - math.pi * 32.0 / 180.0),
-                            size=0.50,
-                            color=(1.00, 1.0, 1.0, 1.00),
-                            strength=1500.0,
-                            name="Main Light")
-#    
+    mat = create_custom_material(set_principled_node_as_rough_blue ,"Material_Right")
 
-def set_scene_objects(color, pose, gt=None) -> bpy.types.Object:
-    if color == 0:
-        mat = create_custom_material(set_principled_node_as_rough_blue ,"Material_Right")
-    elif color == 1:
-        mat = create_custom_material(set_principled_node_as_rough_red ,"Material_Right")
-    
-    joints, lines, pose = create_pose_objects(pose)
-    for joint in joints:
-        joint.data.materials.append(mat)
-    for line in lines:
-        line.data.materials.append(mat)
+    if len(pose) == 2:
+        # support having ground truth comparision
+        mat1 = create_custom_material(set_principled_node_as_rough_red ,"Material_left")
+        mats = [mat, mat1]
+    else:
+        mats = [mat]
+        pose = [pose]
+        # debug
+        # pose = [pose, pose+pose*0.1]
+        # mat1 = create_custom_material(set_principled_node_as_rough_red ,"Material_left")
+        # mats = [mat, mat1]
 
-    if gt is not None:
-        mat = create_custom_material(set_principled_node_as_alpha_red ,"Material_gt")
-        joints, lines, pose = create_pose_objects(gt, shadow=False)
+    for idx, (pose_, mat) in enumerate(zip(pose, mats)):
+        # ignore ground truth for shadow
+
+        shadow = False if idx==1 else True
+        joints, lines = create_pose_objects(pose_, shadow)
+
         for joint in joints:
             joint.data.materials.append(mat)
+
         for line in lines:
             line.data.materials.append(mat)
-                
+
+    ##################
     mat = create_custom_material(set_principled_node_as_ceramic, "Material_Plane")
-    set_floor_and_lights(mat)
-    
-    # bpy.ops.object.empty_add(location=(np.median(pose[:][0]), np.median(pose[:][1]), np.median(pose[:][2])))
-    bpy.ops.object.empty_add(location=(pose[7][0], pose[7][1], pose[7][2]*0.8))
+    current_object = utils.create_plane(size=20.0, name="Floor")
+    current_object.data.materials.append(mat)
 
-    # bpy.ops.object.empty_add(location=(0.0, -0.75, 1.3))
-
+    bpy.ops.object.empty_add(location=(0.0, -0.75, 1.3))
     focus_target = bpy.context.object
     return focus_target
 
@@ -176,16 +158,9 @@ def render_image():
     output_file_path = str(sys.argv[sys.argv.index('--') + 1])
     resolution_percentage = int(sys.argv[sys.argv.index('--') + 2])
     num_samples = int(sys.argv[sys.argv.index('--') + 3])
-    color = int(sys.argv[sys.argv.index('--') + 4])
-    pose_string = sys.argv[sys.argv.index('--') + 5]
+    pose_string = sys.argv[sys.argv.index('--') + 4]
     pose = np.array(json.loads(pose_string))
-    
-    gt, error = None, None
-    if len(sys.argv)>12:
-        gt = sys.argv[sys.argv.index('--') + 6]
-        gt = np.array(json.loads(gt))
-        error = sys.argv[sys.argv.index('--') + 7]
-    
+
     # Parameters
     hdri_path = "./assets/HDRIs/green_point_park_2k.hdr"
 
@@ -197,10 +172,7 @@ def render_image():
     utils.clean_objects()
 
     # Objects
-    if gt is not None:
-        focus_target = set_scene_objects(color, pose, gt)
-    else:
-        focus_target = set_scene_objects(color, pose)
+    focus_target = set_scene_objects(pose)
 
     # Camera
     bpy.ops.object.camera_add(location=(0.0, -8.0, 2.0))
@@ -211,18 +183,36 @@ def render_image():
         camera_object.data, focus_target, lens=85, fstop=0.5)
 
     # Lights
-    # utils.build_environment_texture_background(world, hdri_path)
+    utils.build_environment_texture_background(world, hdri_path)
 
-    # Background
-    utils.build_rgb_background(world, rgb=(1.0, 1.0, 1.0, 1.0))
+    # Composition
+    # utils.build_scene_composition(scene)
+
+    # Note 
+    bpy.context.scene.name = "MPJPE - 40mm"
+
+    bpy.context.scene.render.use_stamp = True
+    bpy.context.scene.render.use_stamp_scene = True
+    bpy.context.scene.render.use_stamp_labels = False
+    bpy.context.scene.render.use_stamp_memory = False
+    bpy.context.scene.render.use_stamp_time = False
+    bpy.context.scene.render.use_stamp_date = False
+    bpy.context.scene.render.use_stamp_render_time = False
+    bpy.context.scene.render.use_stamp_filename = False
+    bpy.context.scene.render.use_stamp_frame = False
+    bpy.context.scene.render.use_stamp_camera = False
+    bpy.context.scene.render.stamp_background = (0, 0, 0, 0)
+
+    bpy.context.scene.render.stamp_font_size = 20
+    bpy.context.scene.render.stamp_foreground = (0.8, 0.0243016, 0.0716732, 1)
+
 
     # Render Setting
-    res_x, res_y = 1080, 1080
-    
     utils.set_output_properties(scene, resolution_percentage, output_file_path,
-                                res_x, res_y)
+                                res_x=300, res_y=300)
     
     utils.set_cycles_renderer(scene, camera_object, num_samples, use_transparent_bg=True)
+
 
 if __name__ == "__main__":
     render_image()
