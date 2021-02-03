@@ -125,17 +125,6 @@ def set_cycles_renderer(scene: bpy.types.Scene,
     scene.cycles.samples = num_samples
     scene.render.image_settings.compression = 100
 
-    # GPU Acceleration Ref - https://blender.stackexchange.com/a/196702
-    bpy.context.scene.cycles.device = "GPU"
-    bpy.context.preferences.addons["cycles"].preferences.compute_device_type = "CUDA"
-
-    # get_devices() to let Blender detects GPU device
-    bpy.context.preferences.addons["cycles"].preferences.get_devices()
-    print(bpy.context.preferences.addons["cycles"].preferences.compute_device_type)
-    for d in bpy.context.preferences.addons["cycles"].preferences.devices:
-        d["use"] = 1 # Using all devices, include GPU and CPU
-        print(d["name"], d["use"])
-
     # Enable GPU acceleration
     # Source - https://blender.stackexchange.com/a/196702
     if prefer_cuda_use:
