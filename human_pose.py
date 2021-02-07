@@ -1,5 +1,3 @@
-# blender --background --python 04_principled_bsdf.py --render-frame 1 -- </path/to/output/image> <resolution_percentage> <num_samples>
-
 import bpy
 import sys
 import math
@@ -9,7 +7,6 @@ import json
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import utils
-import external.cc0assetsloader as loader
 
 def set_principled_node_as_rough_blue(principled_node: bpy.types.Node) -> None:
     utils.set_principled_node(
@@ -21,16 +18,6 @@ def set_principled_node_as_rough_blue(principled_node: bpy.types.Node) -> None:
     )
 
 def set_principled_node_as_rough_red(principled_node: bpy.types.Node) -> None:
-    utils.set_principled_node(
-        principled_node=principled_node,
-        base_color=(0.6, 0.1, 0.36, 1.0),
-        metallic=0.5,
-        specular=0.5,
-        roughness=0.9,
-    )
-
-
-def set_principled_node_as_alpha_red(principled_node: bpy.types.Node) -> None:
     utils.set_principled_node(
         principled_node=principled_node,
         base_color=(0.6, 0.2, 0.1, 1.0),
@@ -138,34 +125,21 @@ def set_floor_and_lights(floor_mat) -> None:
                             name="Main Light")
 #    
 
-def set_scene_objects(color, pose, gt=None) -> bpy.types.Object:
-    if color == 0:
-        mat = create_custom_material(set_principled_node_as_rough_blue ,"Material_Right")
-    elif color == 1:
-        mat = create_custom_material(set_principled_node_as_rough_red ,"Material_Right")
-    
+def set_scene_objects(pose) -> bpy.types.Object:
+    mat = create_custom_material(set_principled_node_as_rough_blue ,"Material_Right")
+
     joints, lines, pose = create_pose_objects(pose)
+
     for joint in joints:
         joint.data.materials.append(mat)
+
     for line in lines:
         line.data.materials.append(mat)
-
-    if gt is not None:
-        mat = create_custom_material(set_principled_node_as_alpha_red ,"Material_gt")
-        joints, lines, pose = create_pose_objects(gt, shadow=False)
-        for joint in joints:
-            joint.data.materials.append(mat)
-        for line in lines:
-            line.data.materials.append(mat)
                 
     mat = create_custom_material(set_principled_node_as_ceramic, "Material_Plane")
     set_floor_and_lights(mat)
     
-    # bpy.ops.object.empty_add(location=(np.median(pose[:][0]), np.median(pose[:][1]), np.median(pose[:][2])))
-    bpy.ops.object.empty_add(location=(pose[7][0], pose[7][1], pose[7][2]*0.8))
-
-    # bpy.ops.object.empty_add(location=(0.0, -0.75, 1.3))
-
+    bpy.ops.object.empty_add(location=(pose[0][0], pose[0][1], pose[0][2]*0.8))
     focus_target = bpy.context.object
     return focus_target
 
@@ -176,16 +150,9 @@ def render_image():
     output_file_path = str(sys.argv[sys.argv.index('--') + 1])
     resolution_percentage = int(sys.argv[sys.argv.index('--') + 2])
     num_samples = int(sys.argv[sys.argv.index('--') + 3])
-    color = int(sys.argv[sys.argv.index('--') + 4])
-    pose_string = sys.argv[sys.argv.index('--') + 5]
+    pose_string = sys.argv[sys.argv.index('--') + 4]
     pose = np.array(json.loads(pose_string))
-    
-    gt, error = None, None
-    if len(sys.argv)>12:
-        gt = sys.argv[sys.argv.index('--') + 6]
-        gt = np.array(json.loads(gt))
-        error = sys.argv[sys.argv.index('--') + 7]
-    
+
     # Parameters
     hdri_path = "./assets/HDRIs/green_point_park_2k.hdr"
 
@@ -197,10 +164,7 @@ def render_image():
     utils.clean_objects()
 
     # Objects
-    if gt is not None:
-        focus_target = set_scene_objects(color, pose, gt)
-    else:
-        focus_target = set_scene_objects(color, pose)
+    focus_target = set_scene_objects(pose)
 
     # Camera
     bpy.ops.object.camera_add(location=(0.0, -8.0, 2.0))
@@ -215,9 +179,13 @@ def render_image():
 
     # Background
     utils.build_rgb_background(world, rgb=(1.0, 1.0, 1.0, 1.0))
+    # utils.build_rgb_background(world, rgb=(0.0, 0.0, 0.0, 1.0))
+
+    # Composition
+    # utils.build_scene_composition(scene)
 
     # Render Setting
-    res_x, res_y = 1080, 1080
+    res_x, res_y = 300, 300
     
     utils.set_output_properties(scene, resolution_percentage, output_file_path,
                                 res_x, res_y)
