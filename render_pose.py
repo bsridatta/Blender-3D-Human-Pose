@@ -1,5 +1,6 @@
 import subprocess
 
+
 def render(pose=None,
            color=0,
            gt=None,
@@ -15,7 +16,7 @@ def render(pose=None,
     else:
         anim_frame_option = "--render-frame 1"
 
-    script_path = "human_pose.py"
+    script_path = "pose.py"
 
     if not gt:
         bashCommand = f"{blender_path} --background --python {script_path} \
