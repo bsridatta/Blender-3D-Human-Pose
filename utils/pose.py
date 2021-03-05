@@ -1,8 +1,8 @@
 import sys
-import utils
+import os
+from typing import List, Optional, Tuple, Union
+
 import bpy
-from colour import Color
-from typing import Union, Tuple, List, Optional
 import numpy as np
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
