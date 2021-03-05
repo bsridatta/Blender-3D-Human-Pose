@@ -46,48 +46,6 @@ def set_principled_node_as_ceramic(principled_node: bpy.types.Node) -> None:
     )
 
 
-def create_pose_objects(pose, shadow=True):
-    # pose[:, 1] *= -1
-    skeleton = utils.Skeleton(pose, shadow_on=shadow)
-    print(skeleton)
-    exit()
-
-    for joint in pose:
-        object = utils.create_smooth_sphere(location=(joint[0], joint[1], joint[2]),
-                                            radius=0.07, shadow=shadow)
-        joints.append(object)
-
-    lines = []
-    for idx, line in enumerate(skeleton):
-
-        draw_curve = bpy.data.curves.new('draw_curve'+str(idx), 'CURVE')
-        draw_curve.dimensions = '3D'
-        spline = draw_curve.splines.new('BEZIER')
-        spline.bezier_points.add(1)
-        curve = bpy.data.objects.new('curve'+str(idx), draw_curve)
-        bpy.context.collection.objects.link(curve)
-
-        # Curve settings for new curve
-        draw_curve.resolution_u = 64
-        draw_curve.fill_mode = 'FULL'
-        draw_curve.bevel_depth = 0.04
-        draw_curve.bevel_resolution = 5
-
-        # Assign bezier points to selection object locations
-        for i in range(len(line)):
-            p = spline.bezier_points[i]
-            p.co = pose[line[i]]
-            p.handle_right_type = "VECTOR"
-            p.handle_left_type = "VECTOR"
-
-        bpy.context.view_layer.objects.active = curve
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.context.object.cycles_visibility.shadow = shadow
-        lines.append(curve)
-
-    return joints, lines, pose
-
-
 def create_custom_material(principled_node_setter, name):
     mat = utils.add_material(
         name, use_nodes=True, make_node_tree_empty=True)
@@ -122,19 +80,23 @@ def set_scene_objects(pose) -> bpy.types.Object:
     mat = create_custom_material(
         set_principled_node_as_rough_blue, "Material_Right")
 
-    joints, lines, pose = create_pose_objects(pose)
+    skeleton = utils.Skeleton(pose, shadow_on=True)
 
-    for joint in joints:
+    for joint in skeleton.joints:
         joint.data.materials.append(mat)
 
-    for line in lines:
-        line.data.materials.append(mat)
+    for limb in skeleton.limbs:
+        limb.data.materials.append(mat)
 
     mat = create_custom_material(
         set_principled_node_as_ceramic, "Material_Plane")
     set_floor_and_lights(mat)
 
-    bpy.ops.object.empty_add(location=(pose[0][0], pose[0][1], pose[0][2]*0.8))
+    # camera focus - pelvis or any point, check manually?
+    focus_location = (skeleton.joint_coordinates[0][0],
+                      skeleton.joint_coordinates[0][1], 
+                      skeleton.joint_coordinates[0][2])
+    bpy.ops.object.empty_add(location=focus_location)
     focus_target = bpy.context.object
     return focus_target
 
@@ -170,18 +132,11 @@ def render_image():
     utils.set_camera_params(
         camera_object.data, focus_target, lens=85, fstop=0.5)
 
-    # Lights
-    # utils.build_environment_texture_background(world, hdri_path)
-
     # Background
     utils.build_rgb_background(world, rgb=(1.0, 1.0, 1.0, 1.0))
-    # utils.build_rgb_background(world, rgb=(0.0, 0.0, 0.0, 1.0))
-
-    # Composition
-    # utils.build_scene_composition(scene)
 
     # Render Setting
-    res_x, res_y = 300, 300
+    res_x, res_y = 1080, 1080
 
     utils.set_output_properties(scene, resolution_percentage, output_file_path,
                                 res_x, res_y)

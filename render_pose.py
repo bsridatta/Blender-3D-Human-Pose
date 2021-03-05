@@ -1,14 +1,12 @@
 import subprocess
-from colour import Color
-
 
 def render(pose=None,
            color=0,
            gt=None,
            error=0,
            out_dir="./output/pose",
-           resolution=1,
-           samplings=10,
+           resolution=100,
+           samplings=128,
            animation=False,
            blender_path='blender'):
 
@@ -19,33 +17,20 @@ def render(pose=None,
 
     script_path = "human_pose.py"
 
-    if gt == None:
-        bashCommand = f"{blender_path} --background --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} {color} '{(list(pose))}'"
+    if not gt:
+        bashCommand = f"{blender_path} --background --python {script_path} \
+            {anim_frame_option} -- \
+            {out_dir} {resolution} {samplings} {color} '{(list(pose))}'"
     else:
-        bashCommand = f"{blender_path} --background --python {script_path} {anim_frame_option} -- {out_dir} {resolution} {samplings} {color} '{(list(pose))}' '{(list(gt))}' '{error}'"
+        bashCommand = f"{blender_path} --background --python {script_path} \
+            {anim_frame_option} -- \
+            {out_dir} {resolution} {samplings} {color} '{(list(pose))}' \
+            '{(list(gt))}' '{error}'"
 
     process = subprocess.call(bashCommand, shell=True)
 
 
 if __name__ == "__main__":
-    pose = [
-        [0,            0,           0],
-        [0.1225, -0.0162,  0.1323],
-        [0.0500,  0.5782,  0.2430],
-        [0.1521,  1.1793,  0.2345],
-        [-0.1328,  0.0131, -0.1228],
-        [-0.0684,  0.6515, -0.1639],
-        [0.0446,  1.2321, -0.3423],
-        [0.0125, -0.3119, -0.0439],
-        [-0.0057, -0.6887, -0.0636],
-        [-0.0256, -0.8344,  0.0215],
-        [-0.0257, -0.9586, -0.0392],
-        [-0.1501, -0.5731, -0.1882],
-        [-0.2858, -0.2168, -0.2519],
-        [-0.3526,  0.0676, -0.0910],
-        [0.1537, -0.6018,  0.0710],
-        [0.2307, -0.3378,  0.3558],
-        [-0.0716, -0.4794,  0.3546]]
 
     pose = [
         [0,            0,           0],
@@ -66,5 +51,4 @@ if __name__ == "__main__":
         [-2.6958e-01, -1.6512e-01, -1.6593e-01],
         [-1.3282e-01, -8.0722e-02, -3.6027e-01]]
 
-    # render(pose=pose, gt=pose*0.1, error=52)
     render(pose=pose)
