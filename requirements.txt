@@ -1,4 +1,0 @@
-numpy==1.17.4
-bpy==2.82.1
-mathutils==2.81.2
-typing==3.7.4.3

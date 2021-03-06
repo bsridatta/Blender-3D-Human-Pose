@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import subprocess
 import sys
 from typing import List, Optional, Tuple
 
@@ -162,6 +163,15 @@ def set_principled_node_as_ceramic(principled_node: bpy.types.Node) -> None:
 
 
 def create_custom_material(principled_node_setter, name):
+    """[summary]
+
+    Args:
+        principled_node_setter ([type]): [description]
+        name ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     mat = utils.add_material(
         name, use_nodes=True, make_node_tree_empty=True)
     nodes = mat.node_tree.nodes
@@ -175,6 +185,11 @@ def create_custom_material(principled_node_setter, name):
 
 
 def set_floor_and_lights(floor_mat) -> None:
+    """[summary]
+
+    Args:
+        floor_mat ([type]): [description]
+    """
     size = 20.0
     current_object = utils.create_plane(size=size, name="Floor")
     mat = create_custom_material(
@@ -192,6 +207,14 @@ def set_floor_and_lights(floor_mat) -> None:
 
 
 def set_scene_objects(pose) -> bpy.types.Object:
+    """[summary]
+
+    Args:
+        pose ([type]): [description]
+
+    Returns:
+        bpy.types.Object: [description]
+    """
     mat = create_custom_material(
         set_principled_node_as_rough_blue, "Material_Right")
 
@@ -217,6 +240,8 @@ def set_scene_objects(pose) -> bpy.types.Object:
 
 
 def render_image():
+    """[summary]
+    """
 
     # Args
     output_file_path = str(sys.argv[sys.argv.index('--') + 1])
@@ -258,6 +283,49 @@ def render_image():
 
     utils.set_cycles_renderer(scene, camera_object,
                               num_samples, use_transparent_bg=True)
+
+
+def render_pose(pose=None,
+                color=0,
+                gt=None,
+                error=0,
+                out_dir="./output/pose",
+                resolution=100,
+                samplings=128,
+                animation=False,
+                blender_path='blender'):
+    """[summary]
+
+    Args:
+        pose ([type], optional): [description]. Defaults to None.
+        color (int, optional): [description]. Defaults to 0.
+        gt ([type], optional): [description]. Defaults to None.
+        error (int, optional): [description]. Defaults to 0.
+        out_dir (str, optional): [description]. Defaults to "./output/pose".
+        resolution (int, optional): [description]. Defaults to 100.
+        samplings (int, optional): [description]. Defaults to 128.
+        animation (bool, optional): [description]. Defaults to False.
+        blender_path (str, optional): [description]. Defaults to 'blender'.
+    """
+
+    if animation:
+        anim_frame_option = "--render-anim"
+    else:
+        anim_frame_option = "--render-frame 1"
+
+    script_path = "human_pose.py"
+
+    if not gt:
+        bashCommand = f"{blender_path} --background --python {script_path} \
+            {anim_frame_option} -- \
+            {out_dir} {resolution} {samplings} {color} '{(list(pose))}'"
+    else:
+        bashCommand = f"{blender_path} --background --python {script_path} \
+            {anim_frame_option} -- \
+            {out_dir} {resolution} {samplings} {color} '{(list(pose))}' \
+            '{(list(gt))}' '{error}'"
+
+    process = subprocess.call(bashCommand, shell=True)
 
 
 if __name__ == "__main__":
