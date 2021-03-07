@@ -1,9 +1,14 @@
+"""Script to create 3D skeleton given a list of x,y,z coordinates of joints
+    Use the script with GUI enabled instead of background and find the desired
+    parameters for color, material, camera position, zoom etc
+"""
+
 import json
 import math
 import os
 import subprocess
 import sys
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import bpy
 import numpy as np
@@ -18,7 +23,7 @@ class Skeleton:
                  joint_connections: Optional[Tuple[Tuple[int, int], ...]] = None,
                  rgb: Tuple[float, float, float] = (0.1, 0.2, 0.6),
                  alpha: float = 1,
-                 mettalic: float = 0.5,
+                 metallic: float = 0.5,
                  specular: float = 0.5,
                  roughness: float = 0.9,
                  shadow_on: bool = True,
@@ -26,16 +31,17 @@ class Skeleton:
         """Blender object collection for a 3D pose/skeleton
 
         Args:
-            joint_coordinates (List[List[float]]): [[x,y,z],...] of all joints
-            joint_connections (Optional[Tuple[Tuple[int, int], ...]], optional): Tuples of links to draw limbs connecting joints. Defaults to None.
-            rgb (Tuple[float, float, float], optional): [description]. Defaults to (0.1, 0.2, 0.6).
-            alpha (float, optional): [description]. Defaults to 1.
-            mettalic (float, optional): [description]. Defaults to 0.5.
-            specular (float, optional): [description]. Defaults to 0.5.
-            roughness (float, optional): [description]. Defaults to 0.9.
-            shadow_on (bool, optional): [description]. Defaults to True.
+            joint_coordinates (List[List[float]]): x,y,z of all joints
+            joint_connections (Optional[Tuple[Tuple[int, int], ...]], optional): 
+                Tuples of links to draw limbs connecting joints. Defaults to None.
+            rgb (Tuple[float, float, float], optional): Defaults to (0.1, 0.2, 0.6).
+            alpha (float, optional): Transperancy of whole skeleton. Defaults to 1.
+            metallic (float, optional): Defaults to 0.5.
+            specular (float, optional): Defaults to 0.5.
+            roughness (float, optional): Defaults to 0.9.
+            shadow_on (bool, optional): Enable shadows of skeleton. Defaults to True.
         """
-        self.mettalic = mettalic
+        self.metallic = metallic
         self.specular = specular
         self.roughness = roughness
         self.shadow_on = shadow_on
@@ -54,7 +60,15 @@ class Skeleton:
         self.joints = self.create_joints()
         self.limbs = self.create_limbs()
 
+        # TODO make different set_principled_node to use different materials
+        set_materials(
+            self.joints, self.set_principled_node_skeleton, "Material_Joints")
+        set_materials(
+            self.limbs, self.set_principled_node_skeleton, "Material_Limbs")
+
     def create_limbs(self) -> List[object]:
+        """Blender objects for limbs - Splines
+        """
         limbs = []
         for idx, connection in enumerate(self.joint_connections):
             draw_curve = bpy.data.curves.new('draw_curve'+str(idx), 'CURVE')
@@ -85,6 +99,8 @@ class Skeleton:
         return limbs
 
     def create_joints(self) -> List[object]:
+        """Blender objects for joint - Speheres
+        """
         joint_objs = []
 
         for x, y, z in self.joint_coordinates:
@@ -94,6 +110,17 @@ class Skeleton:
 
         return joint_objs
 
+    def set_principled_node_skeleton(self, principled_node: bpy.types.Node) -> None:
+        """sets required properites for the particular material
+        """
+        utils.set_principled_node(
+            principled_node=principled_node,
+            base_color=self.rgba,
+            metallic=self.metallic,
+            specular=self.specular,
+            roughness=self.roughness,
+        )
+
     @staticmethod
     def _get_rgba(rgb: Tuple[float, float, float], alpha: float):
         # TODO add functionality to convery hex/web to rgb
@@ -101,11 +128,12 @@ class Skeleton:
 
         # add alpha to the rgb tuple
         rgba = rgb + (alpha,)
-
         return rgba
 
     @staticmethod
     def _standardize(joint_coordinates: List[List[float]]) -> np.ndarray:
+        """Standardize all poses to certain range for consistency with camera angle, floor, zoom etc
+        """
         coordinates: np.ndarray = np.array(joint_coordinates)
 
         assert coordinates.shape[-1] == 3, "[x,y,z] values are required"
@@ -127,51 +155,37 @@ class Skeleton:
         return coordinates
 
 
-def set_principled_node_as_rough_blue(principled_node: bpy.types.Node) -> None:
-    utils.set_principled_node(
-        principled_node=principled_node,
-        base_color=(0.1, 0.2, 0.6, 1.0),
-        metallic=0.5,
-        specular=0.5,
-        roughness=0.9,
-    )
+class Floor:
+    def __init__(self, size) -> None:
+        self.size = size
+        # self.base_color=(0.8, 0.8, 0.8, 1.0)
+        self.base_color = (1.0, 1.0, 1.0, 1.0)
+        self.subsurface = 0.1
+        self.subsurface_color = (0.9, 0.9, 0.9, 1.0)
+        self.subsurface_radius = (1.0, 1.0, 1.0)
+        self.metallic = 0.2
+        self.specular = 0.5
+        self.roughness = 0.0
+        
+        self.plane = utils.create_plane(size=self.size, name="Floor")
+        set_materials([self.plane], self.set_principled_node_floor,
+                      "Material_Floor")
+
+    def set_principled_node_floor(self, principled_node: bpy.types.Node) -> None:
+        utils.set_principled_node(
+            principled_node=principled_node,
+            # base_color=self.base_color,
+            base_color=self.base_color,
+            subsurface=self.subsurface,
+            subsurface_color=self.subsurface_color,
+            subsurface_radius=self.subsurface_radius,
+            metallic=self.metallic,
+            specular=self.specular,
+            roughness=self.roughness
+        )
 
 
-def set_principled_node_as_rough_red(principled_node: bpy.types.Node) -> None:
-    utils.set_principled_node(
-        principled_node=principled_node,
-        base_color=(0.6, 0.2, 0.1, 1.0),
-        metallic=0.5,
-        specular=0.5,
-        roughness=0.9,
-        alpha=0.3,
-    )
-
-
-def set_principled_node_as_ceramic(principled_node: bpy.types.Node) -> None:
-    utils.set_principled_node(
-        principled_node=principled_node,
-        # base_color=(0.8, 0.8, 0.8, 1.0),
-        base_color=(1.0, 1.0, 1.0, 1.0),
-        subsurface=0.1,
-        subsurface_color=(0.9, 0.9, 0.9, 1.0),
-        subsurface_radius=(1.0, 1.0, 1.0),
-        metallic=0.2,
-        specular=0.5,
-        roughness=0.0,
-    )
-
-
-def create_custom_material(principled_node_setter, name):
-    """[summary]
-
-    Args:
-        principled_node_setter ([type]): [description]
-        name ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
+def set_materials(objects: List[object], principled_node_setter: Callable, name: str) -> None:
     mat = utils.add_material(
         name, use_nodes=True, make_node_tree_empty=True)
     nodes = mat.node_tree.nodes
@@ -179,22 +193,21 @@ def create_custom_material(principled_node_setter, name):
     output_node = nodes.new(type='ShaderNodeOutputMaterial')
     principled_node = nodes.new(type='ShaderNodeBsdfPrincipled')
     principled_node_setter(principled_node)
-    links.new(principled_node.outputs['BSDF'], output_node.inputs['Surface'])
+    links.new(principled_node.outputs['BSDF'],
+              output_node.inputs['Surface'])
 
-    return mat
+    for obj in objects:
+        obj.data.materials.append(mat)
 
 
-def set_floor_and_lights(floor_mat) -> None:
-    """[summary]
+def set_scene_objects(pose) -> bpy.types.Object:
+    """creates all objects in the scene. 
+    Pose skeleton, floor, lights, focus object for camera to focus at.
 
-    Args:
-        floor_mat ([type]): [description]
     """
-    size = 20.0
-    current_object = utils.create_plane(size=size, name="Floor")
-    mat = create_custom_material(
-        set_principled_node_as_ceramic, "Material_Floor")
-    current_object.data.materials.append(mat)
+    skeleton = Skeleton(pose, shadow_on=True)
+    
+    floor = Floor(size=20.0)
 
     utils.create_area_light(location=(4.0, -3.0, 6.0),
                             rotation=(0.0, math.pi * 60.0 /
@@ -203,44 +216,19 @@ def set_floor_and_lights(floor_mat) -> None:
                             color=(1.00, 1.0, 1.0, 1.00),
                             strength=1500.0,
                             name="Main Light")
-#
-
-
-def set_scene_objects(pose) -> bpy.types.Object:
-    """[summary]
-
-    Args:
-        pose ([type]): [description]
-
-    Returns:
-        bpy.types.Object: [description]
-    """
-    mat = create_custom_material(
-        set_principled_node_as_rough_blue, "Material_Right")
-
-    skeleton = Skeleton(pose, shadow_on=True)
-
-    for joint in skeleton.joints:
-        joint.data.materials.append(mat)
-
-    for limb in skeleton.limbs:
-        limb.data.materials.append(mat)
-
-    mat = create_custom_material(
-        set_principled_node_as_ceramic, "Material_Plane")
-    set_floor_and_lights(mat)
 
     # camera focus - pelvis or any point, check manually?
     focus_location = (skeleton.joint_coordinates[0][0],
                       skeleton.joint_coordinates[0][1],
                       skeleton.joint_coordinates[0][2])
+
     bpy.ops.object.empty_add(location=focus_location)
     focus_target = bpy.context.object
     return focus_target
 
 
 def render_image():
-    """[summary]
+    """The method invoked by blender cli that renders the output image
     """
 
     # Args
@@ -276,6 +264,7 @@ def render_image():
     utils.build_rgb_background(world, rgb=(1.0, 1.0, 1.0, 1.0))
 
     # Render Setting
+    # TODO get as arg
     res_x, res_y = 1080, 1080
 
     utils.set_output_properties(scene, resolution_percentage, output_file_path,
@@ -294,18 +283,20 @@ def render_pose(pose=None,
                 samplings=128,
                 animation=False,
                 blender_path='blender'):
-    """[summary]
+    """The method to use from your project to render poses. 
+    Calls this script with requried args using blender cli. 
+
 
     Args:
-        pose ([type], optional): [description]. Defaults to None.
-        color (int, optional): [description]. Defaults to 0.
-        gt ([type], optional): [description]. Defaults to None.
-        error (int, optional): [description]. Defaults to 0.
-        out_dir (str, optional): [description]. Defaults to "./output/pose".
-        resolution (int, optional): [description]. Defaults to 100.
-        samplings (int, optional): [description]. Defaults to 128.
-        animation (bool, optional): [description]. Defaults to False.
-        blender_path (str, optional): [description]. Defaults to 'blender'.
+        pose ([type], optional): List of x,y,z, of joints. Defaults to None.
+        color (int, optional): Color for skeleton. Defaults to 0.
+        gt ([type], optional): GT pose for comparision. Not implemented. Defaults to None.
+        error (int, optional): Show error on render. Not implemented. Defaults to 0.
+        out_dir (str, optional): save dir path or file name. Defaults to "./output/pose".
+        resolution (int, optional): percentage of resolution (1080). Defaults to 100.
+        samplings (int, optional): samples during rendering. Defaults to 128.
+        animation (bool, optional): not implemented. Defaults to False.
+        blender_path (str, optional): blender exec path. Defaults to 'blender'.
     """
 
     if animation:
