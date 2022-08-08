@@ -10,10 +10,10 @@ Simple script using utilities from [yuki-koyama/blender-cli-rendering](https://g
 - All you need is list of 3D coordinates of the joints
 - Use as shown in render_pose_example.py
 
-- Simple 3D pose
+### Simple 3D pose
 <img src="output/pose0001.png">
 
-- Multiple poses with a wall in the background
+### Multiple poses with a wall in the background
 <img src="output/multiple with wall.png">
 
 
