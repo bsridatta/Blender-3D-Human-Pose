@@ -4,8 +4,10 @@ from typing import Optional
 
 def render_pose(
     pose: list[list[float]],
+    joint_links: list[list[int]],
     color: tuple[float, float, float] = (0.1, 0.2, 0.6),
     gt_pose: Optional[list[list[float]]] = None,
+    gt_joint_links: Optional[list[list[int]]] = None,
     gt_color: Optional[tuple[float, float, float]] = (0.6, 0.2, 0.1),
     output_path: str = "./output/pose",
     resolution_percentage: int = 100,
@@ -18,8 +20,10 @@ def render_pose(
 
     Args:
         pose (list[list[float]]): List of x,y,z, of joints.
+        joint_links (list[list[int]]): List of connections between joints.
         color (tuple[float, float, float], optional): RGB (0-1 scale) color for skeleton. Defaults to (0.1, 0.2, 0.6).
         gt_pose (Optional[list[list[float]]], optional): Pose for comparison. Defaults to None.
+        gt_joint_links (Optional[list[list[int]]]): List of connections between joints for GT pose, probably same as `joint_links`.
         gt_color (Optional[tuple[float, float, float]], optional): RGB (0-1 scale) for GT skeleton. Defaults to (0.6, 0.2, 0.1).
         output_path (str, optional): Save dir path or file name. Defaults to "./output/pose".
         resolution_percentage (int, optional): Percentage of resolution (1080). Defaults to 100.
@@ -35,8 +39,10 @@ def render_pose(
         "--render-frame 1",
         "--",  # Blender ignore the args following this.
         f"--pose '{(list(pose))}'",
+        f"--joint_links '{(list(joint_links))}'",
         f"--color {color[0]} {color[1]} {color[2]}" if color else "",
         f"--gt_pose '{(list(gt_pose))}'" if gt_pose is not None else "",
+        f"--gt_joint_links '{(list(gt_joint_links))}'" if gt_joint_links is not None else "",
         f"--gt_color {gt_color[0]} {gt_color[1]} {gt_color[2]}" if gt_color else "",
         f"--output_path {output_path}",
         f"--resolution_percentage {resolution_percentage}",

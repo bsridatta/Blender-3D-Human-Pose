@@ -8,7 +8,7 @@ import json
 import math
 import os
 import sys
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Tuple
 
 import bpy
 import numpy as np
@@ -21,7 +21,7 @@ class Skeleton:
     def __init__(
         self,
         joint_coordinates: List[List[float]],
-        joint_connections: Optional[Tuple[Tuple[int, int], ...]] = None,
+        joint_links: List[List[int]],
         rgb: Tuple[float, float, float] = (0.1, 0.2, 0.6),
         alpha: float = 1,
         metallic: float = 0.5,
@@ -33,8 +33,8 @@ class Skeleton:
 
         Args:
             joint_coordinates (List[List[float]]): x,y,z of all joints
-            joint_connections (Optional[Tuple[Tuple[int, int], ...]], optional):
-                Tuples of links to draw limbs connecting joints. Defaults to None.
+            joint_links ([List[List[int, int]]]):
+                List of links to draw limbs connecting joints.
             rgb (Tuple[float, float, float], optional): Defaults to (0.1, 0.2, 0.6).
             alpha (float, optional): Transparency of whole skeleton. Defaults to 1.
             metallic (float, optional): Defaults to 0.5.
@@ -49,28 +49,7 @@ class Skeleton:
         self.joint_coordinates = self._standardize(joint_coordinates)
         self.rgba = rgb + (alpha,)
         self.joint_radius = 0.07
-
-        if joint_connections:
-            self.joint_connections = joint_connections
-        else:
-            self.joint_connections = (
-                (0, 7),
-                (7, 8),
-                (8, 9),
-                (9, 10),
-                (8, 11),
-                (11, 12),
-                (12, 13),
-                (8, 14),
-                (14, 15),
-                (15, 16),
-                (0, 1),
-                (1, 2),
-                (2, 3),
-                (0, 4),
-                (4, 5),
-                (5, 6),
-            )
+        self.joint_links = joint_links
 
         self.joints = self.create_joints()
         self.limbs = self.create_limbs()
@@ -82,7 +61,7 @@ class Skeleton:
     def create_limbs(self) -> List[object]:
         """Blender objects for limbs - Splines."""
         limbs = []
-        for idx, connection in enumerate(self.joint_connections):
+        for idx, connection in enumerate(self.joint_links):
             draw_curve = bpy.data.curves.new("draw_curve" + str(idx), "CURVE")
             draw_curve.dimensions = "3D"
             spline = draw_curve.splines.new("BEZIER")
@@ -202,8 +181,10 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--pose", type=str)
+    parser.add_argument("--joint_links", type=str)
     parser.add_argument("--color", type=float, nargs=3)
     parser.add_argument("--gt_pose", type=str)
+    parser.add_argument("--gt_joint_links", type=str)
     parser.add_argument("--gt_color", type=float, nargs=3)
     parser.add_argument("--output_path", type=str)
     parser.add_argument("--resolution_percentage", type=int)
@@ -224,7 +205,9 @@ def render_image():
 
     # Load poses from JSON strings
     pose = np.array(json.loads(args.pose))
+    joint_links = np.array(json.loads(args.joint_links))
     gt_pose = np.array(json.loads(args.gt_pose)) if args.gt_pose else None
+    gt_joint_links = np.array(json.loads(args.gt_joint_links)) if args.gt_joint_links else None
 
     # Scene Building
     scene = bpy.data.scenes["Scene"]
@@ -235,10 +218,12 @@ def render_image():
 
     # Create all objects
     assert len(args.color) == 3
-    skeleton = Skeleton(pose, shadow_on=True, rgb=args.color)
+    skeleton = Skeleton(pose, joint_links, shadow_on=True, rgb=args.color)
     if gt_pose is not None:
         assert len(args.gt_color) == 3
-        _ = Skeleton(gt_pose, shadow_on=True, rgb=args.gt_color)
+        if gt_joint_links is None:
+            raise ValueError("GT joint link must be passed along with pose.")
+        _ = Skeleton(gt_pose, gt_joint_links, shadow_on=True, rgb=args.gt_color)
 
     _ = Floor(size=20.0)
 

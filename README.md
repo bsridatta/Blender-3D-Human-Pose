@@ -16,11 +16,13 @@ Refer to the main repo or `other_examples` for working with other objects and re
 
 [Render pose](./render_human_pose.py) is a helper function that runs [human pose](./human_pose.py) script in blender and save the rendered images to disk.
 
-```
+```python
 def render_pose(
     pose: list[list[float]],
+    joint_links: list[list[int]],
     color: tuple[float, float, float] = (0.1, 0.2, 0.6),
     gt_pose: Optional[list[list[float]]] = None,
+    gt_joint_links: Optional[list[list[int]]] = None,
     gt_color: Optional[tuple[float, float, float]] = (0.6, 0.2, 0.1),
     output_path: str = "./output/pose",
     resolution_percentage: int = 100,
@@ -33,8 +35,10 @@ def render_pose(
 
     Args:
         pose (list[list[float]]): List of x,y,z, of joints.
+        joint_links (list[list[int]]): List of connections between joints.
         color (tuple[float, float, float], optional): RGB (0-1 scale) color for skeleton. Defaults to (0.1, 0.2, 0.6).
         gt_pose (Optional[list[list[float]]], optional): Pose for comparison. Defaults to None.
+        gt_joint_links (Optional[list[list[int]]]): List of connections between joints for GT pose, probably same as `joint_links`.
         gt_color (Optional[tuple[float, float, float]], optional): RGB (0-1 scale) for GT skeleton. Defaults to (0.6, 0.2, 0.1).
         output_path (str, optional): Save dir path or file name. Defaults to "./output/pose".
         resolution_percentage (int, optional): Percentage of resolution (1080). Defaults to 100.
@@ -70,7 +74,26 @@ pose = [
     [-0.1328, -0.0807, -0.3603],
 ]
 
-render_pose(pose=pose)
+joint_links = [
+    [0, 7],
+    [7, 8],
+    [8, 9],
+    [9, 10],
+    [8, 11],
+    [11, 12],
+    [12, 13],
+    [8, 14],
+    [14, 15],
+    [15, 16],
+    [0, 1],
+    [1, 2],
+    [2, 3],
+    [0, 4],
+    [4, 5],
+    [5, 6],
+]
+
+render_pose(pose=pose, joint_links=joint_links)
 ```
 <img src="output/single_pose.png">
 
@@ -97,7 +120,12 @@ gt_pose = [
     [-0.1168, -0.1026, -0.3603],
 ]
 
-render_pose(pose=pose, gt_pose=gt_pose)
+render_pose(
+    pose=pose,
+    joint_links=joint_links,
+    gt_pose=gt_pose,
+    gt_joint_links=joint_links,
+)
 ```
 <img src="output/pose_comparison.png">
 
