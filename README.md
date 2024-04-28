@@ -23,7 +23,7 @@ def render_pose(
     color: tuple[float, float, float] = (0.1, 0.2, 0.6),
     gt_pose: Optional[list[list[float]]] = None,
     gt_joint_links: Optional[list[list[int]]] = None,
-    gt_color: Optional[tuple[float, float, float]] = (0.6, 0.2, 0.1),
+    gt_color: Optional[tuple[float, float, float]] = (0.6, 0.1, 0.2),
     output_path: str = "./output/pose",
     resolution_percentage: int = 100,
     samplings: int = 128,
@@ -39,7 +39,7 @@ def render_pose(
         color (tuple[float, float, float], optional): RGB (0-1 scale) color for skeleton. Defaults to (0.1, 0.2, 0.6).
         gt_pose (Optional[list[list[float]]], optional): Pose for comparison. Defaults to None.
         gt_joint_links (Optional[list[list[int]]]): List of connections between joints for GT pose, probably same as `joint_links`.
-        gt_color (Optional[tuple[float, float, float]], optional): RGB (0-1 scale) for GT skeleton. Defaults to (0.6, 0.2, 0.1).
+        gt_color (Optional[tuple[float, float, float]], optional): RGB (0-1 scale) for GT skeleton. Defaults to (0.6, 0.1, 0.2).
         output_path (str, optional): Save dir path or file name. Defaults to "./output/pose".
         resolution_percentage (int, optional): Percentage of resolution (1080). Defaults to 100.
         samplings (int, optional): Samples during rendering. Defaults to 128.
